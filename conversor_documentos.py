@@ -827,16 +827,22 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def run_server(port: int = 8765):
-    server = HTTPServer(("127.0.0.1", port), Handler)
+    # En Render se usa 0.0.0.0; en local se usa 127.0.0.1
+    is_render = "RENDER" in os.environ
+    host = "0.0.0.0" if is_render else "127.0.0.1"
+    server = HTTPServer((host, port), Handler)
     url = f"http://127.0.0.1:{port}"
     print(f"\n{'─'*50}")
     print(f"  📄  Conversor de Documentos")
     print(f"{'─'*50}")
-    print(f"  🌐  Abriendo en: {url}")
-    print(f"  🔒  Procesamiento 100% local")
-    print(f"  ⌨️   Presiona Ctrl+C para salir")
+    if not is_render:
+        print(f"  🌐  Abriendo en: {url}")
+        print(f"  🔒  Procesamiento 100% local")
+        print(f"  ⌨️   Presiona Ctrl+C para salir")
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    else:
+        print(f"  🌐  Servidor en puerto {port}")
     print(f"{'─'*50}\n")
-    threading.Timer(1.0, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -844,5 +850,5 @@ def run_server(port: int = 8765):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
+    port = int(os.environ.get("PORT", sys.argv[1] if len(sys.argv) > 1 else 8765))
     run_server(port)
